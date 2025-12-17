@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CepFacil - Busca Estável</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        /* --- RESET --- */
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Roboto, Helvetica, sans-serif; }
+        
+        body {
+            background-color: #eef2f6;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            color: #333;
+            padding: 20px;
+        }
+
+        .app-container {
+            background: #fff;
+            width: 100%;
+            max-width: 1100px;
+            height: 85vh;
+            min-height: 550px;
+            display: flex;
+            border-radius: 20px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        /* --- BARRA LATERAL --- */
+        .sidebar {
+            width: 320px;
+            background: #fff;
+            display: flex;
+            flex-direction: column;
+            border-right: 1px solid #eee;
+            flex-shrink: 0;
+            z-index: 10;
+        }
+
+        header {
+            background: #2c3e50;
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+        header h1 { font-size: 20px; }
+
+        .form-area {
+            padding: 20px;
+            flex-grow: 1;
+            overflow-y: auto;
+        }
+
+        /* --- RESULTADOS --- */
+        .main-content {
+            flex-grow: 1;
+            background: #f4f6f8;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .results-header {
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            font-size: 14px;
+            font-weight: 600;
+            color: #555;
+        }
+
+        #resultados {
+            flex-grow: 1;
+            overflow-y: auto;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 15px;
+            align-content: start;
+            padding-right: 5px;
+        }
+
+        /* Scrollbar */
+        #resultados::-webkit-scrollbar { width: 8px; }
+        #resultados::-webkit-scrollbar-thumb { background-color: #bdc3c7; border-radius: 4px; }
+
+        /* --- INPUTS --- */
+        .input-group { margin-bottom: 15px; }
+        .input-group label { display: block; margin-bottom: 5px; font-weight: 700; font-size: 11px; color: #7f8c8d; text-transform: uppercase; }
+        .input-wrapper { position: relative; }
+        .input-wrapper i { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: #95a5a6; }
+
+        input, select {
+            width: 100%; padding: 12px 12px 12px 35px;
+            border: 2px solid #ecf0f1; border-radius: 8px;
+            font-size: 14px; outline: none; background: #fff;
+            transition: 0.2s;
+        }
+        input:focus, select:focus { border-color: #3498db; }
+
+        .row { display: flex; gap: 10px; }
+
+        button#btn-buscar {
+            width: 100%; padding: 14px;
+            background: #2980b9; color: white;
+            border: none; border-radius: 8px;
+            font-size: 15px; font-weight: bold; cursor: pointer;
+            transition: 0.2s; margin-top: 5px;
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+        }
+        button#btn-buscar:hover { background: #3498db; }
+        button:disabled { background: #95a5a6; cursor: not-allowed; }
+
+        /* --- CARDS --- */
+        .card-resultado {
+            background: #fff;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 5px solid #2980b9;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            position: relative;
+        }
+
+        .cep-destaque { font-size: 18px; font-weight: 800; color: #2c3e50; display: block; margin-bottom: 5px; }
+        .endereco-info { font-size: 13px; color: #7f8c8d; line-height: 1.4; }
+        
+        .btn-copy {
+            position: absolute; top: 10px; right: 10px;
+            background: transparent; border: 1px solid #eee;
+            width: 30px; height: 30px; border-radius: 5px;
+            color: #2980b9; cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .btn-copy:hover { background: #2980b9; color: #fff; }
+
+        /* MENSAGENS */
+        .msg-centro {
+            grid-column: 1 / -1;
+            background: #d1ecf1; color: #0c5460; padding: 10px;
+            border-radius: 6px; font-size: 13px; text-align: center; margin-bottom: 10px;
+        }
+        .msg-erro {
+            grid-column: 1 / -1;
+            color: #c0392b; text-align: center; margin-top: 20px;
+        }
+        .msg-inicial {
+            grid-column: 1 / -1;
+            color: #95a5a6; text-align: center; margin-top: 50px;
+        }
+
+        /* MOBILE */
+        @media (max-width: 768px) {
+            .app-container { flex-direction: column; height: 100vh; border-radius: 0; }
+            .sidebar { width: 100%; height: auto; border-right: none; border-bottom: 1px solid #eee; }
+            .main-content { background: #eee; }
+            #resultados { display: flex; flex-direction: column; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="app-container">
+        <div class="sidebar">
+            <header>
+                <h1>CepFacil</h1>
+            </header>
+            
+            <div class="form-area">
+                <div class="row">
+                    <div style="flex: 0 0 100px;">
+                        <div class="input-group">
+                            <label>UF</label>
+                            <div class="input-wrapper">
+                                <select id="uf">
+                                    <option value="" disabled selected>UF</option>
+                                    <option value="AC">AC</option><option value="AL">AL</option><option value="AP">AP</option>
+                                    <option value="AM">AM</option><option value="BA">BA</option><option value="CE">CE</option>
+                                    <option value="DF">DF</option><option value="ES">ES</option><option value="GO">GO</option>
+                                    <option value="MA">MA</option><option value="MT">MT</option><option value="MS">MS</option>
+                                    <option value="MG">MG</option><option value="PA">PA</option><option value="PB">PB</option>
+                                    <option value="PR">PR</option><option value="PE">PE</option><option value="PI">PI</option>
+                                    <option value="RJ">RJ</option><option value="RN">RN</option><option value="RS">RS</option>
+                                    <option value="RO">RO</option><option value="RR">RR</option><option value="SC">SC</option>
+                                    <option value="SP">SP</option><option value="SE">SE</option><option value="TO">TO</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div style="flex: 1;">
+                        <div class="input-group">
+                            <label>Cidade</label>
+                            <div class="input-wrapper">
+                                <i class="fa-solid fa-city"></i>
+                                <input type="text" id="cidade" placeholder="Ex: Indaial">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label>Bairro (Opcional)</label>
+                    <div class="input-wrapper">
+                        <i class="fa-solid fa-map-pin"></i>
+                        <input type="text" id="bairro" placeholder="Filtre o bairro">
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label>Rua (Opcional)</label>
+                    <div class="input-wrapper">
+                        <i class="fa-solid fa-road"></i>
+                        <input type="text" id="logradouro" placeholder="Nome da rua">
+                    </div>
+                </div>
+
+                <button id="btn-buscar">
+                    <i class="fa-solid fa-search"></i> Buscar
+                </button>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <div class="results-header">
+                <span>Resultados</span>
+                <span id="contador">0</span>
+            </div>
+            
+            <div id="resultados">
+                <div class="msg-inicial">
+                    <i class="fa-regular fa-compass" style="font-size: 40px; margin-bottom:10px;"></i><br>
+                    Preencha UF e Cidade para listar.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const btnBuscar = document.getElementById('btn-buscar');
+        const resultadosDiv = document.getElementById('resultados');
+        const contadorSpan = document.getElementById('contador');
+
+        btnBuscar.addEventListener('click', async () => {
+            // 1. Pegar valores com segurança
+            const uf = document.getElementById('uf').value;
+            const cidade = document.getElementById('cidade').value.trim();
+            const bairro = document.getElementById('bairro').value.trim().toLowerCase();
+            let rua = document.getElementById('logradouro').value.trim();
+
+            // 2. Validação simples
+            if (!uf || cidade.length < 2) {
+                alert("Selecione um Estado (UF) e digite o nome da Cidade.");
+                return;
+            }
+
+            // 3. UI de Carregamento
+            btnBuscar.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Carregando...';
+            btnBuscar.disabled = true;
+            resultadosDiv.innerHTML = '';
+            contadorSpan.innerText = '...';
+
+            // TRUQUE PARA INDAIAL E CIDADES GRANDES:
+            // Se o usuário não digitou rua, pesquisamos por "Rua" genericamente.
+            // Isso força a API a trazer uma lista geral da cidade.
+            let termoBusca = rua;
+            let aviso = false;
+
+            if (termoBusca.length < 3) {
+                termoBusca = "Rua"; 
+                aviso = true;
+            }
+
+            try {
+                // Usando ViaCEP (Mais leve e estável que o mapa)
+                const url = `https://viacep.com.br/ws/${uf}/${cidade}/${termoBusca}/json/`;
+                
+                // Timeout para evitar travamento se a API demorar
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 segundos max
+
+                const response = await fetch(url, { signal: controller.signal });
+                clearTimeout(timeoutId);
+
+                const data = await response.json();
+
+                if (!Array.isArray(data) || data.length === 0) {
+                    resultadosDiv.innerHTML = '<div class="msg-erro">Nenhum CEP encontrado. Tente especificar mais o nome da rua.</div>';
+                    contadorSpan.innerText = '0';
+                    return;
+                }
+
+                // Filtragem local (apenas se usuário digitou bairro ou rua específica)
+                let resultados = data;
+
+                // Se usuário digitou bairro, filtra aqui
+                if (bairro.length > 0) {
+                    resultados = resultados.filter(item => item.bairro.toLowerCase().includes(bairro));
+                }
+
+                // Renderizar
+                if (aviso) {
+                    resultadosDiv.innerHTML = `
+                        <div class="msg-centro">
+                            <i class="fa-solid fa-circle-info"></i> 
+                            Mostrando ruas principais da cidade. Digite o nome da rua para ser mais específico.
+                        </div>
+                    `;
+                }
+
+                resultados.forEach(item => {
+                    const div = document.createElement('div');
+                    div.className = 'card-resultado';
+                    div.innerHTML = `
+                        <button class="btn-copy" onclick="copiar('${item.cep}')" title="Copiar"><i class="fa-regular fa-copy"></i></button>
+                        <span class="cep-destaque">${item.cep}</span>
+                        <div class="endereco-info">
+                            <strong>${item.logradouro}</strong><br>
+                            ${item.bairro}<br>
+                            ${item.localidade}/${item.uf}
+                        </div>
+                    `;
+                    resultadosDiv.appendChild(div);
+                });
+
+                contadorSpan.innerText = resultados.length;
+
+                if (resultados.length === 0) {
+                     resultadosDiv.innerHTML += '<div class="msg-erro">CEPs encontrados na cidade, mas nenhum neste bairro.</div>';
+                }
+
+            } catch (error) {
+                console.error(error);
+                let msg = "Erro ao buscar.";
+                if (error.name === 'AbortError') msg = "A busca demorou muito e foi cancelada.";
+                resultadosDiv.innerHTML = `<div class="msg-erro">${msg}</div>`;
+                contadorSpan.innerText = 'Erro';
+            } finally {
+                // 4. Destravar botão SEMPRE, não importa o erro
+                btnBuscar.innerHTML = '<i class="fa-solid fa-search"></i> Buscar';
+                btnBuscar.disabled = false;
+            }
+        });
+
+        function copiar(texto) {
+            navigator.clipboard.writeText(texto);
+        }
+    </script>
+</body>
+</html>
