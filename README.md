@@ -7,7 +7,7 @@
 ![License](https://img.shields.io/badge/License-MIT-yellow)
 
 ## 📸 Preview
-![Screenshot do App](./screenshot.png)
+![Screenshot do App](./screenshot.PNG)
 *(Lembra-te de colocar um print do app a rodar na pasta do projeto com o nome screenshot.png)*
 
 ## 🚀 Sobre o Projeto
