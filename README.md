@@ -8,7 +8,6 @@
 
 ## 📸 Preview
 ![Screenshot do App](./screenshot.PNG)
-*(Lembra-te de colocar um print do app a rodar na pasta do projeto com o nome screenshot.png)*
 
 ## 🚀 Sobre o Projeto
 
